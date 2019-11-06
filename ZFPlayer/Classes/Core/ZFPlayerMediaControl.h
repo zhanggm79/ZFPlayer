@@ -112,6 +112,13 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)videoPlayer:(ZFPlayerController *)videoPlayer reachabilityChanged:(ZFReachabilityStatus)status;
 
+#pragma mark - The video size changed
+
+/**
+ When the video size changed
+ */
+- (void)videoPlayer:(ZFPlayerController *)videoPlayer presentationSizeChanged:(CGSize)size;
+
 #pragma mark - Gesture
 
 /**
@@ -163,24 +170,39 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - scrollview
 
 /**
- When `tableView` or` collectionView` is about to appear. Because scrollview may be scrolled.
+ When the player will appear in scrollView.
+ */
+- (void)playerWillAppearInScrollView:(ZFPlayerController *)videoPlayer;
+
+/**
+ When the player did appear in scrollView.
  */
 - (void)playerDidAppearInScrollView:(ZFPlayerController *)videoPlayer;
 
 /**
- When `tableView` or` collectionView` is about to disappear. Because scrollview may be scrolled.
+ When the player will disappear in scrollView.
  */
 - (void)playerWillDisappearInScrollView:(ZFPlayerController *)videoPlayer;
 
 /**
- When `tableView` or` collectionView` is about to disappear. Because scrollview may be scrolled.
- */
-- (void)playerDisappearHalfInScrollView:(ZFPlayerController *)videoPlayer;
-
-/**
- When `tableView` or` collectionView` is about to disappear. Because scrollview may be scrolled.
+ When the player did disappear in scrollView.
  */
 - (void)playerDidDisappearInScrollView:(ZFPlayerController *)videoPlayer;
+
+/**
+ When the player appearing in scrollView.
+ */
+- (void)playerAppearingInScrollView:(ZFPlayerController *)videoPlayer playerApperaPercent:(CGFloat)playerApperaPercent;
+
+/**
+ When the player disappearing in scrollView.
+ */
+- (void)playerDisappearingInScrollView:(ZFPlayerController *)videoPlayer playerDisapperaPercent:(CGFloat)playerDisapperaPercent;
+
+/**
+ When the small float view show.
+ */
+- (void)videoPlayer:(ZFPlayerController *)videoPlayer floatViewShow:(BOOL)show;
 
 @end
 

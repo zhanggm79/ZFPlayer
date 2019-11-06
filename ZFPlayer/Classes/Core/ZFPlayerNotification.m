@@ -23,8 +23,6 @@
 // THE SOFTWARE.
 
 #import "ZFPlayerNotification.h"
-#import <AVFoundation/AVFoundation.h>
-#import <MediaPlayer/MPMusicPlayerController.h>
 
 @interface ZFPlayerNotification ()
 
@@ -33,15 +31,6 @@
 @end
 
 @implementation ZFPlayerNotification
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-       
-    }
-    return self;
-}
-
 
 - (void)addNotification {
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -60,6 +49,11 @@
                                              selector:@selector(volumeDidChangeNotification:)
                                                  name:@"AVSystemController_SystemVolumeDidChangeNotification"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(audioSessionInterruptionNotification:)
+                                                 name:AVAudioSessionInterruptionNotification
+                                               object:nil];
+    
 }
 
 - (void)removeNotification {
@@ -67,15 +61,16 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"AVSystemController_SystemVolumeDidChangeNotification" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:AVAudioSessionInterruptionNotification object:nil];
 }
 
 - (void)dealloc {
     [self removeNotification];
 }
 
-- (void)audioSessionRouteChangeNotification:(NSNotification*)notifi {
+- (void)audioSessionRouteChangeNotification:(NSNotification*)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSDictionary *interuptionDict = notifi.userInfo;
+        NSDictionary *interuptionDict = notification.userInfo;
         NSInteger routeChangeReason = [[interuptionDict valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
         switch (routeChangeReason) {
             case AVAudioSessionRouteChangeReasonNewDeviceAvailable: {
@@ -107,6 +102,12 @@
 - (void)applicationDidBecomeActiveNotification {
     self.backgroundState = ZFPlayerBackgroundStateForeground;
     if (_didBecomeActive) _didBecomeActive(self);
+}
+
+- (void)audioSessionInterruptionNotification:(NSNotification *)notification {
+    NSDictionary *interuptionDict = notification.userInfo;
+    AVAudioSessionInterruptionType interruptionType = [[interuptionDict valueForKey:AVAudioSessionInterruptionTypeKey] integerValue];
+    if (self.audioInterruptionCallback) self.audioInterruptionCallback(interruptionType);
 }
 
 @end
