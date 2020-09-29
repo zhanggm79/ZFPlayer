@@ -22,4 +22,7 @@
 
 - (instancetype)initWithData:(ZFTableData *)data;
 
+- (instancetype)initWXData:(ZFTableData *)data;
+
+
 @end

@@ -1,6 +1,6 @@
 {
   "name": "ZFPlayer",
-  "version": "3.2.12",
+  "version": "4.0.2",
   "summary": "A good player made by renzifeng",
   "homepage": "https://github.com/renzifeng/ZFPlayer",
   "license": {
@@ -12,13 +12,14 @@
   },
   "source": {
     "git": "https://github.com/renzifeng/ZFPlayer.git",
-    "tag": "3.2.12"
+    "tag": "4.0.2"
   },
   "social_media_url": "http://weibo.com/zifeng1300",
   "platforms": {
-    "ios": "7.0"
+    "ios": "8.0"
   },
   "requires_arc": true,
+  "static_framework": true,
   "subspecs": [
     {
       "name": "Core",
@@ -59,22 +60,6 @@
         "ZFPlayer/Core": [
 
         ]
-      },
-      "platforms": {
-        "ios": "8.0"
-      }
-    },
-    {
-      "name": "KSYMediaPlayer",
-      "source_files": "ZFPlayer/Classes/KSYMediaPlayer/*.{h,m}",
-      "public_header_files": "ZFPlayer/Classes/KSYMediaPlayer/*.h",
-      "dependencies": {
-        "ZFPlayer/Core": [
-
-        ]
-      },
-      "pod_target_xcconfig": {
-        "ARCHS[sdk=iphonesimulator*]": "$(ARCHS_STANDARD_64_BIT)"
       }
     }
   ]

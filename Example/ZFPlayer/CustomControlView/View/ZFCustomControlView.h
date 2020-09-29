@@ -1,5 +1,5 @@
 //
-//  ZFCustomControlView1.h
+//  ZFCustomControlView.h
 //  ZFPlayer_Example
 //
 //  Created by 紫枫 on 2019/6/5.
@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface ZFCustomControlView1 : UIView <ZFPlayerMediaControl>
+@interface ZFCustomControlView : UIView <ZFPlayerMediaControl>
 
 /// 控制层自动隐藏的时间，默认2.5秒
 @property (nonatomic, assign) NSTimeInterval autoHiddenTimeInterval;

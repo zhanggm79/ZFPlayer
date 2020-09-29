@@ -27,9 +27,7 @@
 
 @property (nonatomic, strong) UIImage *placeholderImage;
 
-@property (nonatomic, strong) UIImageView *bgImgView;
-
-@property (nonatomic, strong) UIView *effectView;
+@property (nonatomic, strong) UIButton *rotation;
 
 @end
 
@@ -39,13 +37,13 @@
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
         self.selectionStyle = UITableViewCellSelectionStyleNone;
-        [self.contentView addSubview:self.bgImgView];
-        [self.bgImgView addSubview:self.effectView];
+        self.contentView.backgroundColor = [UIColor blackColor];
         [self.contentView addSubview:self.coverImageView];
         [self.contentView addSubview:self.titleLabel];
         [self.contentView addSubview:self.likeBtn];
         [self.contentView addSubview:self.commentBtn];
         [self.contentView addSubview:self.shareBtn];
+        [self.contentView addSubview:self.rotation];
     }
     return self;
 }
@@ -53,8 +51,6 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
     self.coverImageView.frame = self.contentView.bounds;
-    self.bgImgView.frame = self.contentView.bounds;
-    self.effectView.frame = self.bgImgView.bounds;
     
     CGFloat min_x = 0;
     CGFloat min_y = 0;
@@ -87,7 +83,23 @@
     min_y = min_view_h - min_h - 50;
     min_w = self.likeBtn.zf_left - margin;
     self.titleLabel.frame = CGRectMake(min_x, min_y, min_w, min_h);
+    
+    min_x = 20;
+    min_w = 50;
+    min_h = 50;
+    min_y = (min_view_h - min_h) / 2;
+    self.rotation.frame = CGRectMake(min_x, min_y, min_w, min_h);
 }
+
+#pragma mark - action
+
+- (void)rotationClick {
+    if ([self.delegate respondsToSelector:@selector(zf_douyinRotation)]) {
+        [self.delegate zf_douyinRotation];
+    }
+}
+
+#pragma mark - getter
 
 - (UILabel *)titleLabel {
     if (!_titleLabel) {
@@ -132,48 +144,32 @@
 
 - (void)setData:(ZFTableData *)data {
     _data = data;
-    if (data.thumbnail_width >= data.thumbnail_height) {
-        self.coverImageView.contentMode = UIViewContentModeScaleAspectFit;
-        self.coverImageView.clipsToBounds = NO;
-    } else {
-        self.coverImageView.contentMode = UIViewContentModeScaleAspectFill;
-        self.coverImageView.clipsToBounds = YES;
-    }
     [self.coverImageView setImageWithURLString:data.thumbnail_url placeholder:[UIImage imageNamed:@"loading_bgView"]];
-    [self.bgImgView setImageWithURLString:data.thumbnail_url placeholder:[UIImage imageNamed:@"loading_bgView"]];
     self.titleLabel.text = data.title;
+    if (data.video_width > data.video_height) { /// 横屏视频才支持旋转
+        self.rotation.hidden = NO;
+    } else {
+        self.rotation.hidden = YES;
+    }
 }
 
 - (UIImageView *)coverImageView {
     if (!_coverImageView) {
         _coverImageView = [[UIImageView alloc] init];
         _coverImageView.userInteractionEnabled = YES;
-        _coverImageView.tag = 100;
-//        _coverImageView.contentMode = UIViewContentModeScaleAspectFit;
+        _coverImageView.tag = kPlayerViewTag;
+        _coverImageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _coverImageView;
 }
 
-- (UIImageView *)bgImgView {
-    if (!_bgImgView) {
-        _bgImgView = [[UIImageView alloc] init];
-        _bgImgView.userInteractionEnabled = YES;
+- (UIButton *)rotation {
+    if (!_rotation) {
+        _rotation = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_rotation setImage:[UIImage imageNamed:@"zfplayer_rotaiton"] forState:UIControlStateNormal];
+        [_rotation addTarget:self action:@selector(rotationClick) forControlEvents:UIControlEventTouchUpInside];
     }
-    return _bgImgView;
-}
-
-- (UIView *)effectView {
-    if (!_effectView) {
-        if (@available(iOS 8.0, *)) {
-            UIBlurEffect *effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
-            _effectView = [[UIVisualEffectView alloc] initWithEffect:effect];
-        } else {
-            UIToolbar *effectView = [[UIToolbar alloc] init];
-            effectView.barStyle = UIBarStyleBlackTranslucent;
-            _effectView = effectView;
-        }
-    }
-    return _effectView;
+    return _rotation;
 }
 
 @end

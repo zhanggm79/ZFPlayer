@@ -1,8 +1,8 @@
 //
-//  KSMediaPlayerManager.h
+//  ZFPresentTransition.h
 //  ZFPlayer
 //
-// Copyright (c) 2016年 任子丰 ( http://github.com/renzifeng )
+// Copyright (c) 2020年 任子丰 ( http://github.com/renzifeng )
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +22,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#import <UIKit/UIKit.h>
+#import "ZFOrientationObserver.h"
 
-#import <Foundation/Foundation.h>
-#if __has_include(<ZFPlayer/ZFPlayerMediaPlayback.h>)
-#import <ZFPlayer/ZFPlayerMediaPlayback.h>
-#else
-#import "ZFPlayerMediaPlayback.h"
-#endif
-#if __has_include(<KSYMediaPlayer/KSYMediaPlayer.h>)
-#import <KSYMediaPlayer/KSYMediaPlayer.h>
+typedef NS_ENUM(NSUInteger, ZFPresentTransitionType) {
+    ZFPresentTransitionTypePresent,
+    ZFPresentTransitionTypeDismiss,
+};
 
-@interface KSMediaPlayerManager : NSObject <ZFPlayerMediaPlayback>
+@interface ZFPresentTransition : NSObject<UIViewControllerAnimatedTransitioning>
 
-@property (nonatomic, strong, readonly) KSYMoviePlayerController *player;
+@property (nonatomic, weak) id<ZFPortraitOrientationDelegate> delagate;
 
-@property (nonatomic, assign) NSTimeInterval timeRefreshInterval;
+@property (nonatomic, assign) CGRect contentFullScreenRect;
+
+@property (nonatomic, assign, getter=isFullScreen) BOOL fullScreen;
+
+@property (nonatomic, assign) BOOL interation;
+
+@property (nonatomic, assign) NSTimeInterval duration;
+
+- (void)transitionWithTransitionType:(ZFPresentTransitionType)type
+                         contentView:(UIView *)contentView
+                       containerView:(UIView *)containerView;
 
 @end
-
-#endif

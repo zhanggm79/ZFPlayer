@@ -1,19 +1,20 @@
 //
-//  ZFCustomControlView1.m
+//  ZFCustomControlView.m
 //  ZFPlayer_Example
 //
 //  Created by 紫枫 on 2019/6/5.
 //  Copyright © 2019 紫枫. All rights reserved.
 //
 
-#import "ZFCustomControlView1.h"
+#import "ZFCustomControlView.h"
 #import "UIView+ZFFrame.h"
 #import "ZFUtilities.h"
-#import <ZFPlayer/ZFPlayer.h>
+#import <ZFPlayer/ZFPlayerController.h>
+#import <ZFPlayer/ZFPlayerConst.h>
 #import "ZFSliderView.h"
 #import "UIImageView+ZFCache.h"
 
-@interface ZFCustomControlView1 () <ZFSliderViewDelegate>
+@interface ZFCustomControlView () <ZFSliderViewDelegate>
 
 /// 底部工具栏
 @property (nonatomic, strong) UIView *bottomToolView;
@@ -34,8 +35,6 @@
 
 @property (nonatomic, assign) BOOL isShow;
 
-@property (nonatomic, strong) UIImageView *bgImgView;
-
 @property (nonatomic, assign) BOOL controlViewAppeared;
 
 @property (nonatomic, strong) dispatch_block_t afterBlock;
@@ -53,7 +52,7 @@
 
 @end
 
-@implementation ZFCustomControlView1
+@implementation ZFCustomControlView
 @synthesize player = _player;
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -95,9 +94,9 @@
 
 - (void)sliderTouchEnded:(float)value {
     if (self.player.totalTime > 0) {
-        @weakify(self)
+        @zf_weakify(self)
         [self.player seekToTime:self.player.totalTime*value completionHandler:^(BOOL finished) {
-            @strongify(self)
+            @zf_strongify(self)
             if (finished) {
                 self.slider.isdragging = NO;
             }
@@ -120,9 +119,9 @@
 - (void)sliderTapped:(float)value {
     if (self.player.totalTime > 0) {
         self.slider.isdragging = YES;
-        @weakify(self)
+        @zf_weakify(self)
         [self.player seekToTime:self.player.totalTime*value completionHandler:^(BOOL finished) {
-            @strongify(self)
+            @zf_strongify(self)
             if (finished) {
                 self.slider.isdragging = NO;
                 [self.player.currentPlayerManager play];
@@ -168,7 +167,6 @@
     CGFloat min_margin = 9;
     
     self.coverImageView.frame = self.bounds;
-    self.bgImgView.frame = self.bounds;
     
     min_w = 80;
     min_h = 80;
@@ -182,7 +180,7 @@
     min_h = (iPhoneX && self.player.isFullScreen) ? 80 : 40;
     self.topToolView.frame = CGRectMake(min_x, min_y, min_w, min_h);
     
-    min_x = (iPhoneX && self.player.isFullScreen) ? 44: 15;
+    min_x = self.player.isFullScreen ? 40: 15;
     min_y = 0;
     min_w = min_view_w - min_x - 15;
     min_h = 30;
@@ -283,9 +281,9 @@
 - (void)autoFadeOutControlView {
     self.controlViewAppeared = YES;
     [self cancelAutoFadeOutControlView];
-    @weakify(self)
+    @zf_weakify(self)
     self.afterBlock = dispatch_block_create(0, ^{
-        @strongify(self)
+        @zf_strongify(self)
         [self hideControlViewWithAnimated:YES];
     });
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.autoHiddenTimeInterval * NSEC_PER_SEC)), dispatch_get_main_queue(),self.afterBlock);
@@ -337,14 +335,13 @@
  @param fullScreenMode 全屏模式
  */
 - (void)showTitle:(NSString *)title coverURLString:(NSString *)coverUrl fullScreenMode:(ZFFullScreenMode)fullScreenMode {
-    UIImage *placeholder = [ZFUtilities imageWithColor:[UIColor colorWithRed:220/255.0 green:220/255.0 blue:220/255.0 alpha:1] size:self.bgImgView.bounds.size];
+    UIImage *placeholder = [ZFUtilities imageWithColor:[UIColor colorWithRed:220/255.0 green:220/255.0 blue:220/255.0 alpha:1] size:self.coverImageView.bounds.size];
     [self resetControlView];
     [self layoutIfNeeded];
     [self setNeedsDisplay];
     self.titleLabel.text = title;
     self.player.orientationObserver.fullScreenMode = fullScreenMode;
-    [self.coverImageView setImageWithURLString:coverUrl placeholder:placeholder];
-    [self.bgImgView setImageWithURLString:coverUrl placeholder:placeholder];
+    [self.player.currentPlayerManager.view.coverImageView setImageWithURLString:coverUrl placeholder:placeholder];
 }
 
 /// 调节播放进度slider和当前时间更新
@@ -395,34 +392,6 @@
 /// 双击手势事件
 - (void)gestureDoubleTapped:(ZFPlayerGestureControl *)gestureControl {
     [self playOrPause];
-}
-
-/// 开始滑动手势事件
-- (void)gestureBeganPan:(ZFPlayerGestureControl *)gestureControl panDirection:(ZFPanDirection)direction panLocation:(ZFPanLocation)location {
-    if (direction == ZFPanDirectionH) {
-        self.sumTime = self.player.currentTime;
-    }
-}
-
-/// 滑动中手势事件
-- (void)gestureChangedPan:(ZFPlayerGestureControl *)gestureControl panDirection:(ZFPanDirection)direction panLocation:(ZFPanLocation)location withVelocity:(CGPoint)velocity {
-
-}
-
-/// 滑动结束手势事件
-- (void)gestureEndedPan:(ZFPlayerGestureControl *)gestureControl panDirection:(ZFPanDirection)direction panLocation:(ZFPanLocation)location {
-    @weakify(self)
-    if (direction == ZFPanDirectionH && self.sumTime >= 0 && self.player.totalTime > 0) {
-        [self.player seekToTime:self.sumTime completionHandler:^(BOOL finished) {
-            @strongify(self)
-            /// 左右滑动调节播放进度
-            [self sliderChangeEnded];
-            if (self.controlViewAppeared) {
-                [self autoFadeOutControlView];
-            }
-        }];
-        self.sumTime = 0;
-    }
 }
 
 /// 捏合手势事件，这里改变了视频的填充模式
@@ -532,14 +501,6 @@
 
 - (void)setPlayer:(ZFPlayerController *)player {
     _player = player;
-    /// 解决播放时候黑屏闪一下问题
-    [player.currentPlayerManager.view insertSubview:self.bgImgView atIndex:0];
-    [player.currentPlayerManager.view insertSubview:self.coverImageView atIndex:1];
-    self.coverImageView.frame = player.currentPlayerManager.view.bounds;
-    self.coverImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.bgImgView.frame = player.currentPlayerManager.view.bounds;
-    self.bgImgView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.coverImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 }
 
 #pragma mark - getter
@@ -628,14 +589,6 @@
         _coverImageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _coverImageView;
-}
-
-- (UIImageView *)bgImgView {
-    if (!_bgImgView) {
-        _bgImgView = [[UIImageView alloc] init];
-        _bgImgView.userInteractionEnabled = YES;
-    }
-    return _bgImgView;
 }
 
 - (ZFSliderView *)bottomPgrogress {

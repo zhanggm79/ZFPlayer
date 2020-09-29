@@ -7,12 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <ZFPlayer/ZFPlayer.h>
+#import <ZFPlayer/ZFPlayerMediaControl.h>
 
 @interface ZFDouYinControlView : UIView <ZFPlayerMediaControl>
 
 - (void)resetControlView;
 
-- (void)showCoverViewWithUrl:(NSString *)coverUrl withImageMode:(UIViewContentMode)contentMode;
+- (void)showCoverViewWithUrl:(NSString *)coverUrl;
 
 @end

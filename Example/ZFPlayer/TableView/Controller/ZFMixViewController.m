@@ -7,11 +7,11 @@
 //
 
 #import "ZFMixViewController.h"
-#import <ZFPlayer/ZFPlayer.h>
 #import <ZFPlayer/ZFAVPlayerManager.h>
 #import <ZFPlayer/ZFIJKPlayerManager.h>
-#import <ZFPlayer/KSMediaPlayerManager.h>
 #import <ZFPlayer/ZFPlayerControlView.h>
+#import <ZFPlayer/UIView+ZFFrame.h>
+#import <ZFPlayer/ZFPlayerConst.h>
 #import "ZFPlayerDetailViewController.h"
 #import "ZFTableViewCell.h"
 #import "ZFTableData.h"
@@ -38,29 +38,45 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
     
     /// playerManager
     ZFAVPlayerManager *playerManager = [[ZFAVPlayerManager alloc] init];
-//    KSMediaPlayerManager *playerManager = [[KSMediaPlayerManager alloc] init];
 //    ZFIJKPlayerManager *playerManager = [[ZFIJKPlayerManager alloc] init];
     
     /// player,tag值必须在cell里设置
-    self.player = [ZFPlayerController playerWithScrollView:self.tableView playerManager:playerManager containerViewTag:100];
+    self.player = [ZFPlayerController playerWithScrollView:self.tableView playerManager:playerManager containerViewTag:kPlayerViewTag];
     self.player.controlView = self.controlView;
     /// 1.0是消失100%时候
     self.player.playerDisapperaPercent = 0.8;
     /// 播放器view露出一半时候开始播放
     self.player.playerApperaPercent = .5;
     
-    @weakify(self)
+    @zf_weakify(self)
     self.player.playerDidToEnd = ^(id  _Nonnull asset) {
-        @strongify(self)
+        @zf_strongify(self)
         [self.player stopCurrentPlayingCell];
     };
     
     self.player.orientationWillChange = ^(ZFPlayerController * _Nonnull player, BOOL isFullScreen) {
-        @strongify(self)
-        [self setNeedsStatusBarAppearanceUpdate];
-        [UIViewController attemptRotationToDeviceOrientation];
-        self.tableView.scrollsToTop = !isFullScreen;
+        kAPPDelegate.allowOrentitaionRotation = isFullScreen;
     };
+    
+    /// 停止的时候找出最合适的播放(只能找到设置了tag值cell)
+    self.player.zf_scrollViewDidEndScrollingCallback = ^(NSIndexPath * _Nonnull indexPath) {
+        @zf_strongify(self)
+        if (!self.player.playingIndexPath) {
+            [self playTheVideoAtIndexPath:indexPath scrollAnimated:NO];
+        }
+    };
+
+     
+    /// 滑动中找到适合的就自动播放
+    /// 如果是停止后再寻找播放可以忽略这个回调
+    /// 如果在滑动中就要寻找到播放的indexPath，并且开始播放，那就要这样写
+    self.player.zf_playerShouldPlayInScrollView = ^(NSIndexPath * _Nonnull indexPath) {
+        @zf_strongify(self)
+        if ([indexPath compare:self.player.playingIndexPath] != NSOrderedSame) {
+            [self playTheVideoAtIndexPath:indexPath scrollAnimated:NO];
+        }
+    };
+     
 }
 
 - (void)viewWillLayoutSubviews {
@@ -72,10 +88,10 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    @weakify(self)
-    [self.tableView zf_filterShouldPlayCellWhileScrolled:^(NSIndexPath *indexPath) {
-        @strongify(self)
-        [self playTheVideoAtIndexPath:indexPath scrollToTop:NO];
+    @zf_weakify(self)
+    [self.player zf_filterShouldPlayCellWhileScrolled:^(NSIndexPath *indexPath) {
+        @zf_strongify(self)
+        [self playTheVideoAtIndexPath:indexPath scrollAnimated:NO];
     }];
 }
 
@@ -95,30 +111,19 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
 }
 
 - (BOOL)shouldAutorotate {
-    return self.player.shouldAutorotate;
+    return NO;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-    if (self.player.isFullScreen && self.player.orientationObserver.fullScreenMode == ZFFullScreenModeLandscape) {
-        return UIInterfaceOrientationMaskLandscape;
-    }
     return UIInterfaceOrientationMaskPortrait;
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    if (self.player.isFullScreen) {
-        return UIStatusBarStyleLightContent;
-    }
     return UIStatusBarStyleDefault;
 }
 
 - (BOOL)prefersStatusBarHidden {
-    /// 如果只是支持iOS9+ 那直接return NO即可，这里为了适配iOS8
-    return self.player.isStatusBarHidden;
-}
-
-- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
-    return UIStatusBarAnimationSlide;
+    return NO;
 }
 
 #pragma mark - UIScrollViewDelegate   列表播放必须实现
@@ -170,20 +175,17 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
     }
     /// 如果没有播放，则点击进详情页会自动播放
     if (!self.player.currentPlayerManager.isPlaying) {
-        [self playTheVideoAtIndexPath:indexPath scrollToTop:NO];
+        [self playTheVideoAtIndexPath:indexPath scrollAnimated:NO];
     }
     /// 到详情页
     ZFPlayerDetailViewController *detailVC = [ZFPlayerDetailViewController new];
     detailVC.player = self.player;
-    @weakify(self)
     /// 详情页返回的回调
     detailVC.detailVCPopCallback = ^{
-        @strongify(self)
         [self.player addPlayerViewToCell];
     };
     /// 详情页点击播放的回调
     detailVC.detailVCPlayCallback = ^{
-        @strongify(self)
         [self zf_playTheVideoAtIndexPath:indexPath];
     };
     [self.navigationController pushViewController:detailVC animated:YES];
@@ -201,16 +203,20 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
 #pragma mark - ZFTableViewCellDelegate
 
 - (void)zf_playTheVideoAtIndexPath:(NSIndexPath *)indexPath {
-    [self playTheVideoAtIndexPath:indexPath scrollToTop:NO];
+    [self playTheVideoAtIndexPath:indexPath scrollAnimated:NO];
 }
 
 #pragma mark - private method
 
 /// play the video
-- (void)playTheVideoAtIndexPath:(NSIndexPath *)indexPath scrollToTop:(BOOL)scrollToTop {
+- (void)playTheVideoAtIndexPath:(NSIndexPath *)indexPath scrollAnimated:(BOOL)animated {
     NSInteger index = (indexPath.row-1)/3;
     ZFTableViewCellLayout *layout = self.dataSource[index];
-    [self.player playTheIndexPath:indexPath assetURL:[NSURL URLWithString:layout.data.video_url] scrollToTop:scrollToTop];
+    if (animated) {
+        [self.player playTheIndexPath:indexPath assetURL:[NSURL URLWithString:layout.data.video_url] scrollPosition:ZFPlayerScrollViewScrollPositionTop animated:YES];
+    } else {
+        [self.player playTheIndexPath:indexPath assetURL:[NSURL URLWithString:layout.data.video_url]];
+    }
     [self.controlView showTitle:layout.data.title
                  coverURLString:layout.data.thumbnail_url
                  fullScreenMode:layout.isVerticalVideo?ZFFullScreenModePortrait:ZFFullScreenModeLandscape];
@@ -233,14 +239,6 @@ static NSString *kDouYinIdentifier = @"douYinIdentifier";
         _tableView.estimatedRowHeight = 0;
         _tableView.estimatedSectionFooterHeight = 0;
         _tableView.estimatedSectionHeaderHeight = 0;
-        /// 停止的时候找出最合适的播放(只能找到设置了tag值cell)
-        @weakify(self)
-        _tableView.zf_scrollViewDidStopScrollCallback = ^(NSIndexPath * _Nonnull indexPath) {
-            @strongify(self)
-            if (!self.player.playingIndexPath) {
-                [self playTheVideoAtIndexPath:indexPath scrollToTop:NO];
-            }
-        };
     }
     return _tableView;
 }

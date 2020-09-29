@@ -8,12 +8,15 @@
 
 #import <UIKit/UIKit.h>
 #import "ZFTableData.h"
+#import "ZFDouYinCellDelegate.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ZFDouyinCollectionViewCell : UICollectionViewCell
 
 @property (nonatomic, strong) ZFTableData *data;
+
+@property (nonatomic, weak) id<ZFDouYinCellDelegate> delegate;
 
 @end
 

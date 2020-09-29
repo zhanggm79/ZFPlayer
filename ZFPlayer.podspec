@@ -8,16 +8,16 @@
 
 Pod::Spec.new do |s|
     s.name             = 'ZFPlayer'
-    s.version          = '3.2.14'
+    s.version          = '4.0.2'
     s.summary          = 'A good player made by renzifeng'
     s.homepage         = 'https://github.com/renzifeng/ZFPlayer'
     s.license          = { :type => 'MIT', :file => 'LICENSE' }
     s.author           = { 'renzifeng' => 'zifeng1300@gmail.com' }
     s.source           = { :git => 'https://github.com/renzifeng/ZFPlayer.git', :tag => s.version.to_s }
     s.social_media_url = 'http://weibo.com/zifeng1300'
-    s.ios.deployment_target = '7.0'
+    s.ios.deployment_target = '8.0'
     s.requires_arc = true
-    
+    s.static_framework = true
     s.default_subspec = 'Core'
     
     s.subspec 'Core' do |core|
@@ -44,17 +44,6 @@ Pod::Spec.new do |s|
         ijkplayer.public_header_files = 'ZFPlayer/Classes/ijkplayer/*.h'
         ijkplayer.dependency 'ZFPlayer/Core'
         ijkplayer.dependency 'IJKMediaFramework'
-        ijkplayer.ios.deployment_target = '8.0'
-    end
-    
-    s.subspec 'KSYMediaPlayer' do |ksyMediaPlayer|
-        ksyMediaPlayer.source_files = 'ZFPlayer/Classes/KSYMediaPlayer/*.{h,m}'
-        ksyMediaPlayer.public_header_files = 'ZFPlayer/Classes/KSYMediaPlayer/*.h'
-        ksyMediaPlayer.dependency 'ZFPlayer/Core'
-        ksyMediaPlayer.dependency 'KSYMediaPlayer'
-        ksyMediaPlayer.pod_target_xcconfig = {
-            'ARCHS[sdk=iphonesimulator*]' => '$(ARCHS_STANDARD_64_BIT)'
-        }
     end
     
 end

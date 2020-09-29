@@ -18,10 +18,9 @@
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, weak) id<ZFTableViewCellDelegate> delegate;
 @property (nonatomic, strong) NSIndexPath *indexPath;
-
 @property (nonatomic, strong) UIImageView *bgImgView;
-
 @property (nonatomic, strong) UIView *effectView;
+@property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 
 @end
 
@@ -40,6 +39,7 @@
         [self.contentView addSubview:self.fullMaskView];
         self.contentView.backgroundColor = [UIColor blackColor];
         self.selectionStyle = UITableViewCellSelectionStyleNone;
+        [self.coverImageView addGestureRecognizer:self.tapGesture];
     }
     return self;
 }
@@ -86,8 +86,7 @@
     }];
 }
 
-
-- (void)playBtnClick:(UIButton *)sender {
+- (void)playClick {
     if ([self.delegate respondsToSelector:@selector(zf_playTheVideoAtIndexPath:)]) {
         [self.delegate zf_playTheVideoAtIndexPath:self.indexPath];
     }
@@ -99,7 +98,7 @@
     if (!_playBtn) {
         _playBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         [_playBtn setImage:[UIImage imageNamed:@"new_allPlay_44x44_"] forState:UIControlStateNormal];
-        [_playBtn addTarget:self action:@selector(playBtnClick:) forControlEvents:UIControlEventTouchUpInside];
+        [_playBtn addTarget:self action:@selector(playClick) forControlEvents:UIControlEventTouchUpInside];
     }
     return _playBtn;
 }
@@ -144,7 +143,8 @@
     if (!_coverImageView) {
         _coverImageView = [[UIImageView alloc] init];
         _coverImageView.userInteractionEnabled = YES;
-        _coverImageView.tag = 100;
+        _coverImageView.tag = kPlayerViewTag;
+        _coverImageView.clipsToBounds = YES;
         _coverImageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _coverImageView;
@@ -170,6 +170,13 @@
         }
     }
     return _effectView;
+}
+
+- (UITapGestureRecognizer *)tapGesture {
+    if (!_tapGesture) {
+        _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(playClick)];
+    }
+    return _tapGesture;
 }
 
 @end

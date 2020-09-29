@@ -14,7 +14,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.coverImageView.tag = 100;
+        self.coverImageView.tag = kPlayerViewTag;
         [self.contentView addSubview:self.coverImageView];
         [self.coverImageView addSubview:self.playBtn];
     }
@@ -37,7 +37,7 @@
     if (!_coverImageView) {
         _coverImageView = [[UIImageView alloc] init];
         _coverImageView.userInteractionEnabled = YES;
-        _coverImageView.tag = 100;
+        _coverImageView.tag = kPlayerViewTag;
         _coverImageView.contentMode = UIViewContentModeScaleAspectFill;
         _coverImageView.clipsToBounds = YES;
     }

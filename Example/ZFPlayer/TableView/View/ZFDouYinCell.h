@@ -8,9 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import "ZFTableData.h"
+#import "ZFDouYinCellDelegate.h"
 
 @interface ZFDouYinCell : UITableViewCell 
 
 @property (nonatomic, strong) ZFTableData *data;
+
+@property (nonatomic, weak) id<ZFDouYinCellDelegate> delegate;
 
 @end

@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <ZFPlayer/ZFPlayer.h>
+#import <ZFPlayer/ZFPlayerMediaControl.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

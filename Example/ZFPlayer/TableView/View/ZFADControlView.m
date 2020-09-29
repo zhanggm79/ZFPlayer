@@ -9,6 +9,8 @@
 #import "ZFADControlView.h"
 #import <ZFPlayer/UIView+ZFFrame.h>
 #import <ZFPlayer/ZFUtilities.h>
+#import <ZFPlayer/ZFPlayerController.h>
+
 
 @interface ZFADControlView ()
 @property (nonatomic, strong) UIImageView *bgImgView;

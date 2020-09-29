@@ -12,14 +12,12 @@
 #import <ZFPlayer/ZFUtilities.h>
 #import "ZFLoadingView.h"
 #import <ZFPlayer/ZFSliderView.h>
+#import <ZFPlayer/ZFPlayerController.h>
 
 @interface ZFDouYinControlView ()
-/// 封面图
-@property (nonatomic, strong) UIImageView *coverImageView;
+
 @property (nonatomic, strong) UIButton *playBtn;
 @property (nonatomic, strong) ZFSliderView *sliderView;
-@property (nonatomic, strong) UIImageView *bgImgView;
-@property (nonatomic, strong) UIView *effectView;
 
 @end
 
@@ -38,8 +36,6 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.coverImageView.frame = self.player.currentPlayerManager.view.bounds;
-    
     CGFloat min_x = 0;
     CGFloat min_y = 0;
     CGFloat min_w = 0;
@@ -57,26 +53,16 @@
     min_w = min_view_w;
     min_h = 1;
     self.sliderView.frame = CGRectMake(min_x, min_y, min_w, min_h);
-    
-    self.bgImgView.frame = self.bounds;
-    self.effectView.frame = self.bgImgView.bounds;
 }
 
 - (void)resetControlView {
     self.playBtn.hidden = YES;
     self.sliderView.value = 0;
     self.sliderView.bufferValue = 0;
-    self.coverImageView.contentMode = UIViewContentModeScaleAspectFit;
 }
 
 /// 加载状态改变
 - (void)videoPlayer:(ZFPlayerController *)videoPlayer loadStateChanged:(ZFPlayerLoadState)state {
-    if (state == ZFPlayerLoadStatePrepare) {
-        self.coverImageView.hidden = NO;
-    } else if (state == ZFPlayerLoadStatePlaythroughOK || state == ZFPlayerLoadStatePlayable) {
-        self.coverImageView.hidden = YES;
-        self.effectView.hidden = NO;
-    }
     if ((state == ZFPlayerLoadStateStalled || state == ZFPlayerLoadStatePrepare) && videoPlayer.currentPlayerManager.isPlaying) {
         [self.sliderView startAnimating];
     } else {
@@ -96,9 +82,8 @@
         self.playBtn.transform = CGAffineTransformMakeScale(1.5f, 1.5f);
         [UIView animateWithDuration:0.2f delay:0
                             options:UIViewAnimationOptionCurveEaseIn animations:^{
-                                self.playBtn.transform = CGAffineTransformIdentity;
-                            } completion:^(BOOL finished) {
-                            }];
+            self.playBtn.transform = CGAffineTransformIdentity;
+        } completion:nil];
     } else {
         [self.player.currentPlayerManager play];
         self.playBtn.hidden = YES;
@@ -107,40 +92,13 @@
 
 - (void)setPlayer:(ZFPlayerController *)player {
     _player = player;
-    [player.currentPlayerManager.view insertSubview:self.bgImgView atIndex:0];
-    [self.bgImgView addSubview:self.effectView];
-    [player.currentPlayerManager.view insertSubview:self.coverImageView atIndex:1];
 }
 
-- (void)showCoverViewWithUrl:(NSString *)coverUrl withImageMode:(UIViewContentMode)contentMode {
-    self.coverImageView.contentMode = contentMode;
-    [self.coverImageView setImageWithURLString:coverUrl placeholder:[UIImage imageNamed:@"img_video_loading"]];
-    [self.bgImgView setImageWithURLString:coverUrl placeholder:[UIImage imageNamed:@"img_video_loading"]];
+- (void)showCoverViewWithUrl:(NSString *)coverUrl {
+    [self.player.currentPlayerManager.view.coverImageView setImageWithURLString:coverUrl placeholder:[UIImage imageNamed:@"img_video_loading"]];
 }
 
 #pragma mark - getter
-
-- (UIImageView *)bgImgView {
-    if (!_bgImgView) {
-        _bgImgView = [[UIImageView alloc] init];
-        _bgImgView.userInteractionEnabled = YES;
-    }
-    return _bgImgView;
-}
-
-- (UIView *)effectView {
-    if (!_effectView) {
-        if (@available(iOS 8.0, *)) {
-            UIBlurEffect *effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
-            _effectView = [[UIVisualEffectView alloc] initWithEffect:effect];
-        } else {
-            UIToolbar *effectView = [[UIToolbar alloc] init];
-            effectView.barStyle = UIBarStyleBlackTranslucent;
-            _effectView = effectView;
-        }
-    }
-    return _effectView;
-}
 
 - (UIButton *)playBtn {
     if (!_playBtn) {
@@ -161,15 +119,6 @@
         _sliderView.isHideSliderBlock = NO;
     }
     return _sliderView;
-}
-
-- (UIImageView *)coverImageView {
-    if (!_coverImageView) {
-        _coverImageView = [[UIImageView alloc] init];
-        _coverImageView.userInteractionEnabled = YES;
-        _coverImageView.clipsToBounds = YES;
-    }
-    return _coverImageView;
 }
 
 @end

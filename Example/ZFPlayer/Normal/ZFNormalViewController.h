@@ -1,5 +1,5 @@
 //
-//  ZFNoramlViewController.h
+//  ZFNormalViewController.h
 //  ZFPlayer
 //
 //  Created by 紫枫 on 2018/3/21.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ZFNoramlViewController : UIViewController
+@interface ZFNormalViewController : UIViewController
 
 
 @end

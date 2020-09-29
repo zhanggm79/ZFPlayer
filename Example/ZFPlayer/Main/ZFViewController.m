@@ -36,7 +36,7 @@ static NSString *kIdentifier = @"kIdentifier";
 }
 
 - (NSArray <ZFTableItem *>*)createItemsByPlayerType {
-    return @[[ZFTableItem itemWithTitle:@"普通样式" subTitle:@"Normal style" viewControllerName:@"ZFNoramlViewController"],
+    return @[[ZFTableItem itemWithTitle:@"普通样式" subTitle:@"Normal style" viewControllerName:@"ZFNormalViewController"],
              [ZFTableItem itemWithTitle:@"UITableView样式" subTitle:@"UITableView style" viewControllerName:@"ZFAutoPlayerViewController"],
              [ZFTableItem itemWithTitle:@"UICollectionView样式" subTitle:@"UICollectionView style" viewControllerName:@"ZFCollectionViewController"],
              [ZFTableItem itemWithTitle:@"UIScrollView样式" subTitle:@"UIScrollView style" viewControllerName:@"ZFScrollViewViewController"]];
@@ -46,6 +46,7 @@ static NSString *kIdentifier = @"kIdentifier";
     return @[[ZFTableItem itemWithTitle:@"点击播放" subTitle:@"Click to play" viewControllerName:@"ZFNotAutoPlayViewController"],
              [ZFTableItem itemWithTitle:@"自动播放" subTitle:@"Auto play" viewControllerName:@"ZFAutoPlayerViewController"],
              [ZFTableItem itemWithTitle:@"列表明暗播放" subTitle:@"Light and dark style" viewControllerName:@"ZFLightTableViewController"],
+             [ZFTableItem itemWithTitle:@"微信朋友圈" subTitle:@"wechat friend circle style" viewControllerName:@"ZFWChatViewController"],
              [ZFTableItem itemWithTitle:@"混合cell样式" subTitle:@"Mix cell style" viewControllerName:@"ZFMixViewController"],
              [ZFTableItem itemWithTitle:@"小窗播放" subTitle:@"Small view style" viewControllerName:@"ZFSmallPlayViewController"],
              [ZFTableItem itemWithTitle:@"抖音样式" subTitle:@"Douyin style" viewControllerName:@"ZFDouYinViewController"],
@@ -79,7 +80,7 @@ static NSString *kIdentifier = @"kIdentifier";
 }
 
 - (BOOL)shouldAutorotate {
-    return YES;
+    return NO;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
@@ -117,13 +118,15 @@ static NSString *kIdentifier = @"kIdentifier";
         [(ZFDouYinViewController *)viewController playTheIndex:0];
     }
     viewController.navigationItem.title = itme.title;
+    viewController.hidesBottomBarWhenPushed = YES;
     
     if ([vcString isEqualToString:@"ZFDouyinCollectionViewController"] && [itme.title isEqualToString:@"横向滚动抖音"]) {
         ZFDouyinCollectionViewController *douyinVC = (ZFDouyinCollectionViewController *)viewController;
         douyinVC.scrollViewDirection = ZFPlayerScrollViewDirectionHorizontal;
     }
     if ([vcString isEqualToString:@"ZFFullScreenViewController"]) {
-        [self.navigationController pushViewController:viewController animated:NO];
+        viewController.modalPresentationStyle = UIModalPresentationFullScreen;
+        [self.navigationController presentViewController:viewController animated:NO completion:nil];
     } else {
         [self.navigationController pushViewController:viewController animated:YES];
     }

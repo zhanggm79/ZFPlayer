@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <ZFPlayer/ZFPlayer.h>
+#import <ZFPlayer/ZFPlayerController.h>
 
 @interface ZFPlayerDetailViewController : UIViewController
 

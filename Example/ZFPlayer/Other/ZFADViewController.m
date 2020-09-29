@@ -7,11 +7,11 @@
 //
 
 #import "ZFADViewController.h"
-#import <ZFPlayer/ZFPlayer.h>
 #import <ZFPlayer/ZFAVPlayerManager.h>
 #import <ZFPlayer/ZFIJKPlayerManager.h>
-#import <ZFPlayer/KSMediaPlayerManager.h>
 #import <ZFPlayer/ZFPlayerControlView.h>
+#import <ZFPlayer/UIView+ZFFrame.h>
+#import <ZFPlayer/ZFPlayerConst.h>
 #import "UIImageView+ZFCache.h"
 #import "ZFUtilities.h"
 #import "ZFADControlView.h"
@@ -21,11 +21,11 @@ static NSString *kVideoCover = @"https://upload-images.jianshu.io/upload_images/
 @interface ZFADViewController ()
 
 @property (nonatomic, strong) ZFPlayerController *player;
-@property (nonatomic, strong) ZFPlayerController *adPlayer;
 @property (nonatomic, strong) UIImageView *containerView;
 @property (nonatomic, strong) ZFPlayerControlView *controlView;
 @property (nonatomic, strong) ZFADControlView *adControlView;
-
+@property (nonatomic, strong) ZFAVPlayerManager *playerManager;
+@property (nonatomic, strong) ZFAVPlayerManager *adPlayerManager;
 @end
 
 @implementation ZFADViewController
@@ -35,62 +35,49 @@ static NSString *kVideoCover = @"https://upload-images.jianshu.io/upload_images/
     self.view.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.containerView];
     
-    ZFAVPlayerManager *playerManager = [[ZFAVPlayerManager alloc] init];
-    playerManager.shouldAutoPlay = NO;
+    CGFloat x = 0;
+    CGFloat y = CGRectGetMaxY(self.navigationController.navigationBar.frame);
+    CGFloat w = CGRectGetWidth(self.view.frame);
+    CGFloat h = w*9/16;
+    self.containerView.frame = CGRectMake(x, y, w, h);
+    
+    
+    self.playerManager = [[ZFAVPlayerManager alloc] init];
+    /// 广告
+    self.adPlayerManager = [[ZFAVPlayerManager alloc] init];
+
     /// 播放器相关
-    self.player = [ZFPlayerController playerWithPlayerManager:playerManager containerView:self.containerView];
-    self.player.controlView = self.controlView;
+    self.player = [ZFPlayerController playerWithPlayerManager:self.adPlayerManager containerView:self.containerView];
+    self.player.controlView = self.adControlView;
     /// 设置退到后台继续播放
     self.player.pauseWhenAppResignActive = NO;
-    
-    @weakify(self)
+
+    @zf_weakify(self)
     self.player.orientationWillChange = ^(ZFPlayerController * _Nonnull player, BOOL isFullScreen) {
-        @strongify(self)
-        [self setNeedsStatusBarAppearanceUpdate];
+        kAPPDelegate.allowOrentitaionRotation = isFullScreen;
     };
-    
+
     /// 播放完成
     self.player.playerDidToEnd = ^(id  _Nonnull asset) {
-        @strongify(self)
-        [self.player.currentPlayerManager replay];
-        [self.player playTheNext];
-        if (!self.player.isLastAssetURL) {
-            NSString *title = [NSString stringWithFormat:@"视频标题%zd",self.player.currentPlayIndex];
-            [self.controlView showTitle:title coverURLString:kVideoCover fullScreenMode:ZFFullScreenModeLandscape];
+        @zf_strongify(self)
+        if (self.player.currentPlayerManager == self.adPlayerManager) {
+            self.player.controlView = self.controlView;
+            self.player.currentPlayerManager = self.playerManager;
+            self.player.currentPlayerManager.shouldAutoPlay = YES;
+            [self.player.currentPlayerManager play];
+            [self.controlView showTitle:@"iPhone X" coverURLString:kVideoCover fullScreenMode:ZFFullScreenModeLandscape];
         } else {
             [self.player stop];
         }
     };
     
-    NSString *URLString = [@"http://flv3.bn.netease.com/tvmrepo/2018/6/H/9/EDJTRBEH9/SD/EDJTRBEH9-mobile.mp4" stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    playerManager.assetURL = [NSURL URLWithString:URLString];
+    /// 一定要在player初始化之后设置assetURL
+    self.playerManager.shouldAutoPlay = NO;
+    self.playerManager.assetURL = [NSURL URLWithString:@"https://www.apple.com/105/media/cn/mac/family/2018/46c4b917_abfd_45a3_9b51_4e3054191797/films/bruce/mac-bruce-tpl-cn-2018_1280x720h.mp4"];
     
-    /// 广告
-    ZFAVPlayerManager *adPlayerManager = [[ZFAVPlayerManager alloc] init];
-    self.adPlayer = [ZFPlayerController playerWithPlayerManager:adPlayerManager containerView:self.controlView];
-    self.adPlayer.controlView = self.adControlView;
-    self.adPlayer.assetURL = [NSURL URLWithString:@"https://fcvideo.cdn.bcebos.com/smart/f103c4fc97d2b2e63b15d2d5999d6477.mp4"];
-    self.adPlayer.exitFullScreenWhenStop = NO;
-    self.adPlayer.orientationWillChange = ^(ZFPlayerController * _Nonnull player, BOOL isFullScreen) {
-        @strongify(self)
-        [self setNeedsStatusBarAppearanceUpdate];
-    };
-    self.adPlayer.playerDidToEnd = ^(id  _Nonnull asset) {
-        @strongify(self)
-        [self.adPlayer stopCurrentPlayingView];
-        self.player.currentPlayerManager.shouldAutoPlay = YES;
-        [self.player.currentPlayerManager play];
-    };
-}
+    self.adPlayerManager.assetURL = [NSURL URLWithString:@"https://fcvideo.cdn.bcebos.com/smart/f103c4fc97d2b2e63b15d2d5999d6477.mp4"];
+    self.adPlayerManager.shouldAutoPlay = YES;
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    self.player.viewControllerDisappear = NO;
-}
-
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    self.player.viewControllerDisappear = YES;
 }
 
 - (void)viewWillLayoutSubviews {
@@ -103,29 +90,18 @@ static NSString *kVideoCover = @"https://upload-images.jianshu.io/upload_images/
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    if (self.player.isFullScreen) {
-        return UIStatusBarStyleLightContent;
-    }
     return UIStatusBarStyleDefault;
 }
 
 - (BOOL)prefersStatusBarHidden {
-    /// 如果只是支持iOS9+ 那直接return NO即可，这里为了适配iOS8
-    return self.player.isStatusBarHidden;
-}
-
-- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
-    return UIStatusBarAnimationSlide;
+    return NO;
 }
 
 - (BOOL)shouldAutorotate {
-    return self.player.shouldAutorotate;
+    return NO;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-    if (self.player.isFullScreen) {
-        return UIInterfaceOrientationMaskLandscape;
-    }
     return UIInterfaceOrientationMaskPortrait;
 }
 
@@ -143,17 +119,18 @@ static NSString *kVideoCover = @"https://upload-images.jianshu.io/upload_images/
 - (ZFADControlView *)adControlView {
     if (!_adControlView) {
         _adControlView = [[ZFADControlView alloc] init];
-        @weakify(self)
+        @zf_weakify(self)
         _adControlView.skipCallback = ^{
-            @strongify(self)
-            [self.adPlayer stopCurrentPlayingView];
-            self.player.currentPlayerManager.shouldAutoPlay = YES;
+            @zf_strongify(self)
+            self.player.controlView = self.controlView;
+            self.player.currentPlayerManager = self.playerManager;
+            self.playerManager.shouldAutoPlay = YES;
             [self.player.currentPlayerManager play];
-            self.player.viewControllerDisappear = NO;
+            [self.controlView showTitle:@"iPhone X" coverURLString:kVideoCover fullScreenMode:ZFFullScreenModeLandscape];
         };
         
         _adControlView.fullScreenCallback = ^{
-            @strongify(self)
+            @zf_strongify(self)
             if (self.player.isFullScreen) {
                 [self.player enterFullScreen:NO animated:YES];
             } else {
